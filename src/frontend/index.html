@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08121f" />
+    <title>ScreenAwake</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div class="brand-mark">◐</div>
+        <div><p class="eyebrow">SCREEN AWAKE</p><h1>让屏幕保持清醒</h1></div>
+        <span id="platform-badge" class="platform-badge">网页版</span>
+      </header>
+
+      <section class="hero" aria-labelledby="status-title">
+        <div class="status-orb" id="status-orb"></div>
+        <div><p class="eyebrow" id="status-title">当前状态</p><h2 id="status-text">尚未开启</h2><p id="status-detail">开启后将阻止显示器与系统自动休眠。</p></div>
+        <button id="toggle-button" class="primary">开启常亮</button>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><h3>基础选项</h3><span>始终启用</span></div>
+        <label class="setting"><input id="power-guard" type="checkbox" checked disabled /><span><strong>保持屏幕常亮</strong><small>阻止显示器关闭与整机休眠</small></span></label>
+      </section>
+
+      <section id="desktop-options" class="panel desktop-only" hidden>
+        <div class="panel-title"><h3>进阶选项</h3><button id="permission-button" class="text-button">检查权限</button></div>
+        <label class="setting"><input id="jiggle" type="checkbox" /><span><strong>启用鼠标微动</strong><small id="jiggle-help">每 5 秒轻微移动并还原光标，重置闲置计时器</small></span></label>
+        <label class="setting"><input id="keyboard" type="checkbox" /><span><strong>键盘空事件兜底</strong><small>模拟 Shift 短按；仅在严苛策略下使用</small></span></label>
+        <label class="setting"><input id="window-ping" type="checkbox" /><span><strong>窗口激活备用策略</strong><small>低频后台窗口事件，仅供兼容性排障</small></span></label>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><h3>定时设置</h3><span id="timer-value">永久</span></div>
+        <div class="duration-grid" role="radiogroup" aria-label="常亮时长">
+          <button data-duration="0" class="duration selected">永久</button>
+          <button data-duration="1800" class="duration">30 分钟</button>
+          <button data-duration="3600" class="duration">1 小时</button>
+          <button data-duration="10800" class="duration">3 小时</button>
+        </div>
+      </section>
+
+      <section class="panel status-panel">
+        <div class="panel-title"><h3>状态信息</h3><span id="remaining">无限制</span></div>
+        <dl>
+          <div><dt>电源防护</dt><dd id="power-state">未运行</dd></div>
+          <div class="desktop-only"><dt>鼠标微动</dt><dd id="jiggle-state">未启用</dd></div>
+          <div class="desktop-only"><dt>辅助功能权限</dt><dd id="permission-state">检测中</dd></div>
+        </dl>
+      </section>
+
+      <p id="notice" class="notice" role="status"></p>
+    </main>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>
