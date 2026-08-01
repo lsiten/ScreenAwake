@@ -34,6 +34,7 @@ function formatRemaining(seconds: number | null) {
 }
 function render() {
   const running = state.active;
+  document.documentElement.dataset.screenAwakeActive = String(running);
   byId("status-orb").classList.toggle("active", running);
   byId("status-text").textContent = running ? "屏幕常亮运行中" : "尚未开启";
   byId("status-detail").textContent = running ? "关闭窗口后仍会在系统托盘中持续运行。" : "开启后将阻止显示器与系统自动休眠。";
