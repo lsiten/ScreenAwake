@@ -16,7 +16,7 @@ npm run tauri dev
 - 电源抑制锁：macOS 使用 `caffeinate -d -i`，Windows 使用 `SetThreadExecutionState`，Linux 使用 `systemd-inhibit`。
 - 鼠标微动：每五秒以 1px 相对位移交替移动；macOS 会先检查辅助功能权限。
 - 键盘兜底：可选模拟 Shift 短按，默认关闭。
-- 托盘、倒计时、开机自启和 `Cmd+Shift+A` 快捷键均在桌面端可用；关闭主窗口会隐藏到托盘，不会停止防护。
+- 托盘、倒计时、开机自启和 `Cmd+Shift+A` 快捷键均在桌面端可用；关闭主窗口会隐藏到托盘，不会停止防护。开机自启可在“启动设置”中开关。
 
 ## macOS 权限
 
@@ -25,3 +25,5 @@ npm run tauri dev
 ## 发布
 
 推送 `main` 自动发布网页至 GitHub Pages。推送 `v*` 标签会生成 GitHub Release，包含 macOS DMG 与 Windows 安装包。正式分发 macOS 应用前，请在仓库机密中配置 Apple 签名与公证凭据，并扩展 release 工作流的签名步骤。
+
+当前公开构建使用完整的临时代码签名以保证包完整性，但尚未经过 Apple Developer ID 公证。若 Gatekeeper 阻止首次启动，可在 Finder 中按住 Control 点击应用并选择“打开”；如仍受下载隔离影响，执行：`xattr -cr /Applications/ScreenAwake.app`。生产面向公众分发前仍应配置 Developer ID 签名和 Apple 公证凭据。

@@ -29,7 +29,19 @@ jobs:
         with:
           targets: aarch64-apple-darwin
       - run: npm ci
-      - run: npm run tauri build -- ${{ matrix.args }}
+      - if: matrix.os == 'macos-latest'
+        run: npm run tauri build -- --bundles app --target aarch64-apple-darwin
+      - if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          app="src-tauri/target/aarch64-apple-darwin/release/bundle/macos/ScreenAwake.app"
+          dmg="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/ScreenAwake_0.1.1_aarch64.dmg"
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          mkdir -p "$(dirname "$dmg")"
+          hdiutil create -volname ScreenAwake -srcfolder "$app" -ov -format UDZO "$dmg"
+      - if: matrix.os == 'windows-latest'
+        run: npm run tauri build
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

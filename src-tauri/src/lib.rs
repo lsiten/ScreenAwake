@@ -90,6 +90,14 @@ fn set_launch_at_login(app: AppHandle, enabled: bool) -> Result<(), String> {
     }
 }
 
+#[tauri::command(rename_all = "snake_case")]
+fn get_launch_at_login(app: AppHandle) -> Result<bool, String> {
+    use tauri_plugin_autostart::ManagerExt;
+    app.autolaunch()
+        .is_enabled()
+        .map_err(|error| error.to_string())
+}
+
 fn toggle_awake(app: &AppHandle) {
     let state = app.state::<AppState>();
     if state.status().active {
@@ -185,7 +193,8 @@ pub fn run() {
             get_status,
             check_accessibility_permission,
             open_mac_accessibility_settings,
-            set_launch_at_login
+            set_launch_at_login,
+            get_launch_at_login
         ])
         .build(tauri::generate_context!())
         .expect("创建 ScreenAwake 应用失败")

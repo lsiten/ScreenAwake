@@ -1,6 +1,6 @@
 [package]
 name = "screen-awake"
-version = "0.1.0"
+version = "0.1.1"
 description = "A layered desktop keep-awake utility"
 authors = ["ScreenAwake"]
 edition = "2021"

@@ -86,11 +86,23 @@ byId<HTMLButtonElement>("permission-button").addEventListener("click", async () 
   if (!granted) { await desktopInvoke("open_mac_accessibility_settings"); message("请在系统设置中为 ScreenAwake 开启辅助功能权限，然后再次检查。"); }
   render();
 });
+byId<HTMLInputElement>("autostart").addEventListener("change", async (event) => {
+  if (!isTauri) return;
+  const enabled = (event.currentTarget as HTMLInputElement).checked;
+  try {
+    await desktopInvoke("set_launch_at_login", { enabled });
+    message(enabled ? "已开启开机自启。" : "已关闭开机自启。");
+  } catch (error) {
+    (event.currentTarget as HTMLInputElement).checked = !enabled;
+    message(error instanceof Error ? error.message : String(error));
+  }
+});
 async function initialize() {
   if (isTauri) {
     byId("platform-badge").textContent = "桌面端";
     desktopElements.forEach((element) => { element.hidden = false; });
     Object.assign(state, await desktopInvoke<AppStatus>("get_status"));
+    byId<HTMLInputElement>("autostart").checked = await desktopInvoke<boolean>("get_launch_at_login");
     const { listen } = await import("@tauri-apps/api/event");
     await listen<AppStatus>("awake-status", (event) => { Object.assign(state, event.payload); render(); });
   } else {
