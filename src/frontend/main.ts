@@ -63,7 +63,9 @@ async function start() {
       if (!("wakeLock" in navigator)) throw new Error("当前浏览器不支持 Screen Wake Lock API");
       webKeepAwakeRequested = true;
       webWakeLock = await navigator.wakeLock.request("screen");
-      webWakeLock.addEventListener("release", () => {
+      const acquiredWakeLock = webWakeLock;
+      acquiredWakeLock.addEventListener("release", () => {
+        if (webWakeLock === acquiredWakeLock) webWakeLock = undefined;
         state.active = false;
         state.powerGuardActive = false;
         if (webKeepAwakeRequested && document.visibilityState !== "visible") message("标签页暂时不可见；返回后会自动恢复常亮。");
@@ -121,7 +123,10 @@ async function initialize() {
   } else {
     desktopElements.forEach((element) => { element.hidden = true; });
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && webKeepAwakeRequested && !webWakeLock) start();
+      if (document.visibilityState === "visible" && webKeepAwakeRequested && (!webWakeLock || webWakeLock.released)) {
+        webWakeLock = undefined;
+        void start();
+      }
     });
   }
   render();
