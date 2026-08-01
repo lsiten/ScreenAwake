@@ -17,6 +17,7 @@ const state: AppStatus = {
 };
 let selectedDuration = 0;
 let webWakeLock: WakeLockSentinel | undefined;
+let webKeepAwakeRequested = false;
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const toggleButton = byId<HTMLButtonElement>("toggle-button");
@@ -59,8 +60,14 @@ async function start() {
       }));
     } else {
       if (!("wakeLock" in navigator)) throw new Error("当前浏览器不支持 Screen Wake Lock API");
+      webKeepAwakeRequested = true;
       webWakeLock = await navigator.wakeLock.request("screen");
-      webWakeLock.addEventListener("release", () => { state.active = false; state.powerGuardActive = false; render(); });
+      webWakeLock.addEventListener("release", () => {
+        state.active = false;
+        state.powerGuardActive = false;
+        if (webKeepAwakeRequested && document.visibilityState !== "visible") message("标签页暂时不可见；返回后会自动恢复常亮。");
+        render();
+      });
       state.active = true; state.powerGuardActive = true;
       if (selectedDuration) window.setTimeout(() => stop(), selectedDuration * 1000);
       message("网页模式需要保持此标签页可见。企业 MDM 锁屏请使用桌面客户端。");
@@ -71,7 +78,12 @@ async function start() {
 async function stop() {
   try {
     if (isTauri) Object.assign(state, await desktopInvoke<AppStatus>("stop_awake"));
-    else { await webWakeLock?.release(); webWakeLock = undefined; Object.assign(state, { active: false, powerGuardActive: false }); }
+    else {
+      webKeepAwakeRequested = false;
+      await webWakeLock?.release();
+      webWakeLock = undefined;
+      Object.assign(state, { active: false, powerGuardActive: false });
+    }
   } catch (error) { message(error instanceof Error ? error.message : String(error)); }
   render();
 }
@@ -107,7 +119,9 @@ async function initialize() {
     await listen<AppStatus>("awake-status", (event) => { Object.assign(state, event.payload); render(); });
   } else {
     desktopElements.forEach((element) => { element.hidden = true; });
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && state.active && !webWakeLock) start(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && webKeepAwakeRequested && !webWakeLock) start();
+    });
   }
   render();
 }
