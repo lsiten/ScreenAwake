@@ -1,4 +1,5 @@
 import "./style.css";
+import { lang, t } from "./i18n";
 
 type AppStatus = {
   active: boolean;
@@ -26,27 +27,35 @@ const desktopElements = document.querySelectorAll<HTMLElement>(".desktop-only");
 
 function message(text: string) { notice.textContent = text; }
 function formatRemaining(seconds: number | null) {
-  if (seconds === null) return "无限制";
+  if (seconds === null) return t("remainingUnlimited");
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const remaining = seconds % 60;
-  return [hours && `${hours}小时`, minutes && `${minutes}分`, `${remaining}秒`].filter(Boolean).join(" ");
+  return [hours && `${hours}${t("unitHour")}`, minutes && `${minutes}${t("unitMin")}`, `${remaining}${t("unitSec")}`].filter(Boolean).join(" ");
+}
+function applyStatic() {
+  document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
+    const key = el.dataset.i18n!;
+    const value = t(key);
+    if (value !== key) el.textContent = value;
+  });
+  byId("platform-badge").textContent = isTauri ? t("desktopBadge") : t("webBadge");
 }
 function render() {
   const running = state.active;
   document.documentElement.dataset.screenAwakeActive = String(running);
   byId("status-orb").classList.toggle("active", running);
-  byId("status-text").textContent = running ? "屏幕常亮运行中" : "尚未开启";
-  byId("status-detail").textContent = running ? "关闭窗口后仍会在系统托盘中持续运行。" : "开启后将阻止显示器与系统自动休眠。";
-  toggleButton.textContent = running ? "停止常亮" : "开启常亮";
+  byId("status-text").textContent = running ? t("statusActive") : t("statusIdle");
+  byId("status-detail").textContent = running ? t("statusDetailActive") : t("statusDetailIdle");
+  toggleButton.textContent = running ? t("btnStop") : t("btnStart");
   toggleButton.classList.toggle("stop", running);
-  byId("power-state").textContent = state.powerGuardActive ? "运行中" : "未运行";
-  byId("jiggle-state").textContent = state.jiggleActive ? "运行中" : "未启用";
-  byId("permission-state").textContent = state.accessibilityGranted ? "已授权" : "未授权";
+  byId("power-state").textContent = state.powerGuardActive ? t("running") : t("off");
+  byId("jiggle-state").textContent = state.jiggleActive ? t("running") : t("offJiggle");
+  byId("permission-state").textContent = state.accessibilityGranted ? t("granted") : t("notGranted");
   byId("remaining").textContent = formatRemaining(state.remainingSeconds);
-  byId("timer-value").textContent = selectedDuration ? formatRemaining(selectedDuration) : "永久";
+  byId("timer-value").textContent = selectedDuration ? formatRemaining(selectedDuration) : t("always");
   byId<HTMLInputElement>("jiggle").disabled = !state.accessibilityGranted;
-  byId("jiggle-help").textContent = state.accessibilityGranted ? "每 5 秒轻微移动并还原光标，重置闲置计时器" : "需要在系统设置中授予辅助功能权限";
+  byId("jiggle-help").textContent = state.accessibilityGranted ? t("jiggleHelpOn") : t("jiggleHelpOff");
 }
 
 async function desktopInvoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
@@ -60,7 +69,7 @@ async function start() {
         request: { durationSeconds: selectedDuration || null, enableJiggle: byId<HTMLInputElement>("jiggle").checked, enableKeyboard: byId<HTMLInputElement>("keyboard").checked, enableWindowPing: byId<HTMLInputElement>("window-ping").checked },
       }));
     } else {
-      if (!("wakeLock" in navigator)) throw new Error("当前浏览器不支持 Screen Wake Lock API");
+      if (!("wakeLock" in navigator)) throw new Error(t("noWakeLock"));
       webKeepAwakeRequested = true;
       webWakeLock = await navigator.wakeLock.request("screen");
       const acquiredWakeLock = webWakeLock;
@@ -68,12 +77,12 @@ async function start() {
         if (webWakeLock === acquiredWakeLock) webWakeLock = undefined;
         state.active = false;
         state.powerGuardActive = false;
-        if (webKeepAwakeRequested && document.visibilityState !== "visible") message("标签页暂时不可见；返回后会自动恢复常亮。");
+        if (webKeepAwakeRequested && document.visibilityState !== "visible") message(t("tabHidden"));
         render();
       });
       state.active = true; state.powerGuardActive = true;
       if (selectedDuration) window.setTimeout(() => stop(), selectedDuration * 1000);
-      message("网页模式需要保持此标签页可见。企业 MDM 锁屏请使用桌面客户端。");
+      message(t("webNeedsVisible"));
     }
   } catch (error) { message(error instanceof Error ? error.message : String(error)); }
   render();
@@ -98,7 +107,7 @@ byId<HTMLButtonElement>("permission-button").addEventListener("click", async () 
   if (!isTauri) return;
   const granted = await desktopInvoke<boolean>("check_accessibility_permission");
   state.accessibilityGranted = granted;
-  if (!granted) { await desktopInvoke("open_mac_accessibility_settings"); message("请在系统设置中为 ScreenAwake 开启辅助功能权限，然后再次检查。"); }
+  if (!granted) { await desktopInvoke("open_mac_accessibility_settings"); message(t("enableA11y")); }
   render();
 });
 byId<HTMLInputElement>("autostart").addEventListener("change", async (event) => {
@@ -106,7 +115,7 @@ byId<HTMLInputElement>("autostart").addEventListener("change", async (event) => 
   const enabled = (event.currentTarget as HTMLInputElement).checked;
   try {
     await desktopInvoke("set_launch_at_login", { enabled });
-    message(enabled ? "已开启开机自启。" : "已关闭开机自启。");
+    message(enabled ? t("autostartOn") : t("autostartOff"));
   } catch (error) {
     (event.currentTarget as HTMLInputElement).checked = !enabled;
     message(error instanceof Error ? error.message : String(error));
@@ -114,7 +123,7 @@ byId<HTMLInputElement>("autostart").addEventListener("change", async (event) => 
 });
 async function initialize() {
   if (isTauri) {
-    byId("platform-badge").textContent = "桌面端";
+    applyStatic();
     desktopElements.forEach((element) => { element.hidden = false; });
     Object.assign(state, await desktopInvoke<AppStatus>("get_status"));
     byId<HTMLInputElement>("autostart").checked = await desktopInvoke<boolean>("get_launch_at_login");
@@ -128,6 +137,7 @@ async function initialize() {
         void start();
       }
     });
+    applyStatic();
   }
   render();
 }
