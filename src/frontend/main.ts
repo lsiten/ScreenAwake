@@ -41,6 +41,13 @@ function applyStatic() {
   });
   byId("platform-badge").textContent = isTauri ? t("desktopBadge") : t("webBadge");
 }
+function setLangSwitcherHref() {
+  const el = byId<HTMLAnchorElement>("lang-switcher");
+  if (!el) return;
+  const path = window.location.pathname;
+  const targetPath = lang === "en" ? path.replace(/\/en\/?$/, "/") : path.replace(/\/?$/, "/en/");
+  el.href = window.location.origin + targetPath;
+}
 function render() {
   const running = state.active;
   document.documentElement.dataset.screenAwakeActive = String(running);
@@ -139,6 +146,7 @@ async function initialize() {
     });
     applyStatic();
   }
+  setLangSwitcherHref();
   render();
 }
 window.setInterval(async () => { if (isTauri && state.active) { Object.assign(state, await desktopInvoke<AppStatus>("get_status")); render(); } }, 1000);

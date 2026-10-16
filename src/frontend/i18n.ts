@@ -65,6 +65,7 @@ const zh: Dict = {
   enableA11y: "请在系统设置中为 ScreenAwake 开启辅助功能权限，然后再次检查。",
   autostartOn: "已开启开机自启。",
   autostartOff: "已关闭开机自启。",
+  switchLang: "English",
 };
 
 const en: Dict = {
@@ -119,6 +120,7 @@ const en: Dict = {
   enableA11y: "Enable accessibility permission for ScreenAwake in System Settings, then check again.",
   autostartOn: "Launch at login enabled.",
   autostartOff: "Launch at login disabled.",
+  switchLang: "中文",
 };
 
 const dict = lang === "en" ? en : zh;
